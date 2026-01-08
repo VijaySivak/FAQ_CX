@@ -670,7 +670,7 @@ class RAGSystem:
     def _generate_llm_answer(self, question: str, context: str) -> str:
         """Generate a natural language answer using OpenAI LLM."""
         try:
-            system_prompt = """You are a helpful customer service assistant for Toyota Financial Services. 
+            system_prompt = """You are a helpful customer service assistant. 
 Your job is to answer customer questions based on the provided FAQ content.
 
 Instructions:
@@ -684,7 +684,7 @@ Instructions:
 
             user_prompt = f"""Customer Question: {question}
 
-Relevant Information from Toyota Financial Services:
+Relevant Information:
 {context}
 
 Please provide a complete, helpful answer to the customer's question based on the information above."""
@@ -735,7 +735,7 @@ Please provide a complete, helpful answer to the customer's question based on th
         # Common patterns to remove
         patterns_to_remove = [
             r'^.*?\?\s*[-:]?\s*',  # Question followed by dash or colon
-            r'^.*?Toyota Financial\s*[-:]?\s*',  # Toyota Financial prefix
+            r'^.*?Financial\s*[-:]?\s*',  # Financial prefix
             r'^.*?What is\s*[-:]?\s*',  # "What is" prefix
             r'^.*?How do\s*[-:]?\s*',  # "How do" prefix
             r'^.*?Pay Online\s*[-:]?\s*',  # "Pay Online" prefix

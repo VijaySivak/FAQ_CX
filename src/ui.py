@@ -1,5 +1,5 @@
 """
-Streamlit UI for Toyota FAQ Scraper with chatbot and metrics dashboard.
+Streamlit UI for FAQ Scraper with chatbot and metrics dashboard.
 Provides interactive interface for RAG chatbot and CX metrics visualization.
 """
 
@@ -32,7 +32,7 @@ from src.vector_store import RAGSystem
 
 
 class StreamlitUI:
-    """Streamlit-based UI for the Toyota FAQ Scraper application."""
+    """Streamlit-based UI for the FAQ Scraper application."""
     
     def __init__(self):
         self.config = Config()
@@ -40,10 +40,10 @@ class StreamlitUI:
         self.metrics_analyzer = MetricsAnalyzer(self.config, self.db)
         self.rag_system = RAGSystem(self.config, self.db)
         
-        # Configure page with Toyota-style favicon
+        # Configure page
         st.set_page_config(
-            page_title="Toyota Financial Services FAQ Analysis",
-            page_icon="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23eb0a1e'/><ellipse cx='16' cy='16' rx='12' ry='8' stroke='white' stroke-width='2' fill='none'/><ellipse cx='16' cy='16' rx='5' ry='8' stroke='white' stroke-width='2' fill='none'/><line x1='4' y1='16' x2='28' y2='16' stroke='white' stroke-width='2'/></svg>",
+            page_title="FAQ Analysis Dashboard",
+            page_icon="💬",
             layout="wide",
             initial_sidebar_state="expanded"
         )
@@ -62,13 +62,13 @@ class StreamlitUI:
             }
 
             /* Top navigation bar */
-            .tfs-header {
+            .app-header {
                 background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
                 padding: 0;
                 margin: -1rem -1rem 1.5rem -1rem;
                 border-radius: 0;
             }
-            .tfs-header-inner {
+            .app-header-inner {
                 max-width: 1400px;
                 margin: 0 auto;
                 padding: 1rem 2rem;
@@ -76,12 +76,12 @@ class StreamlitUI:
                 align-items: center;
                 justify-content: space-between;
             }
-            .tfs-logo-section {
+            .app-logo-section {
                 display: flex;
                 align-items: center;
                 gap: 14px;
             }
-            .tfs-logo {
+            .app-logo {
                 width: 48px;
                 height: 48px;
                 background: #eb0a1e;
@@ -91,21 +91,21 @@ class StreamlitUI:
                 justify-content: center;
                 box-shadow: 0 4px 12px rgba(235, 10, 30, 0.3);
             }
-            .tfs-logo svg {
+            .app-logo svg {
                 width: 32px;
                 height: 32px;
             }
-            .tfs-brand-text {
+            .app-brand-text {
                 display: flex;
                 flex-direction: column;
             }
-            .tfs-brand-name {
+            .app-brand-name {
                 font-size: 1.25rem;
                 font-weight: 700;
                 color: #ffffff;
                 letter-spacing: -0.02em;
             }
-            .tfs-brand-tagline {
+            .app-brand-tagline {
                 font-size: 0.75rem;
                 color: rgba(255, 255, 255, 0.7);
                 font-weight: 500;
@@ -190,23 +190,21 @@ class StreamlitUI:
         """, unsafe_allow_html=True)
     
     def render_header(self):
-        """Render application header with Toyota-inspired branding."""
+        """Render application header."""
         st.markdown(
             """
-            <div class="tfs-header">
-                <div class="tfs-header-inner">
-                    <div class="tfs-logo-section">
-                        <div class="tfs-logo">
+            <div class="app-header">
+                <div class="app-header-inner">
+                    <div class="app-logo-section">
+                        <div class="app-logo">
                             <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <!-- Toyota-inspired ellipse logo -->
-                                <ellipse cx="16" cy="16" rx="14" ry="10" stroke="white" stroke-width="2" fill="none"/>
-                                <ellipse cx="16" cy="16" rx="6" ry="10" stroke="white" stroke-width="2" fill="none"/>
-                                <line x1="2" y1="16" x2="30" y2="16" stroke="white" stroke-width="2"/>
+                                <circle cx="16" cy="16" r="12" stroke="white" stroke-width="2" fill="none"/>
+                                <path d="M10 16 L14 20 L22 12" stroke="white" stroke-width="2" fill="none"/>
                             </svg>
                         </div>
-                        <div class="tfs-brand-text">
-                            <span class="tfs-brand-name">Toyota Financial Services</span>
-                            <span class="tfs-brand-tagline">FAQ Analysis Dashboard</span>
+                        <div class="app-brand-text">
+                            <span class="app-brand-name">FAQ Analysis</span>
+                            <span class="app-brand-tagline">Dashboard</span>
                         </div>
                     </div>
                 </div>
@@ -452,7 +450,7 @@ class StreamlitUI:
         <div style="margin-bottom: 1.5rem;">
             <h2 style="margin: 0; color: #1f2937;">💬 FAQ Assistant</h2>
             <p style="color: #6b7280; margin-top: 0.5rem; font-size: 0.95rem;">
-                Ask questions about Toyota Financial Services. Get instant answers with source citations.
+                Ask questions and get instant answers with source citations.
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -512,7 +510,7 @@ class StreamlitUI:
                                 st.markdown("---")
         
         # Chat input
-        if prompt := st.chat_input("Ask about Toyota Financial Services..."):
+        if prompt := st.chat_input("Ask a question..."):
             # Add user message
             st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):

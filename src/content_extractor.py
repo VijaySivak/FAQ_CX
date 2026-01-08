@@ -1,5 +1,5 @@
 """
-Content extraction and processing for Toyota FAQ pages.
+Content extraction and processing for FAQ pages.
 Extracts FAQ pairs, cleans text, and determines answer modes.
 """
 
@@ -210,7 +210,6 @@ class FAQExtractor:
             return False
         
         # Reject company/organization names (typically end with Inc., LLC, Corp., Ltd.)
-        # Examples: "Toyota Credit Canada Inc.", "Toyota Motor Corporation"
         if re.search(r'\b(inc\.?|llc\.?|corp\.?|corporation|ltd\.?|limited)\s*$', question_lower):
             return False
         
@@ -223,8 +222,8 @@ class FAQExtractor:
         product_patterns = [
             r'roadside assistance\s*\d*$',  # "Roadside Assistance 4"
             r'^\s*\d*-hour roadside',  # "24-Hour Roadside Assistance"
-            r'toyotacare\s*(plus|service)?',  # "ToyotaCare Plus", "ToyotaCare Plus Service Drive"
-            r'toyota\s+(auto|service)\s+care$',  # "Toyota Auto Care", "Toyota Service Care"
+            r'\w+care\s*(plus|service)?',  # Product care services
+            r'\w+\s+(auto|service)\s+care$',  # Auto/service care products
             r'coverage\s+exclusions?\s+may\s+apply',  # "Coverage exclusions may apply"
             r'platinum\s+protection$',  # "Platinum Protection"
             r'^\s*cancellation\s*$',  # Just "Cancellation"
@@ -295,7 +294,7 @@ class FAQExtractor:
         faqs = []
         help_sections = []
         
-        # Look for Toyota's specific FAQ structure first
+        # Look for specific FAQ structure first
         question_elements = soup.find_all('p', class_='faq_ques_text')
         for q_elem in question_elements:
             # Get the question text - it's NOT in the link, it's after the link

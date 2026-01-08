@@ -1,5 +1,5 @@
 """
-Video processing and transcription for Toyota FAQ scraper.
+Video processing and transcription for FAQ scraper.
 Handles video downloads, subtitle extraction, and speech-to-text.
 """
 

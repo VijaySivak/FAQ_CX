@@ -1,5 +1,5 @@
 """
-Configuration management for Toyota FAQ Scraper.
+Configuration management for FAQ Scraper.
 Loads and validates YAML configuration.
 """
 
@@ -56,14 +56,9 @@ class Config:
         if not isinstance(self._config['seed_urls'], list) or len(self._config['seed_urls']) == 0:
             raise ValueError("seed_urls must be a non-empty list")
         
-        # Check that seed URLs match the required ones
-        required_seed_urls = [
-            "https://www.toyotafinancial.com/us/en/planning_tools/faq.html",
-            "https://www.toyotafinancial.com/us/en/end_of_lease_options/faqs.html"
-        ]
-        
-        if set(self._config['seed_urls']) != set(required_seed_urls):
-            raise ValueError("seed_urls must contain exactly the two required Toyota FAQ URLs")
+        # Validate seed URLs are non-empty
+        if not self._config['seed_urls'] or len(self._config['seed_urls']) == 0:
+            raise ValueError("seed_urls must contain at least one URL")
         
         # Validate numeric values
         if self._config['crawl_depth'] < 1 or self._config['crawl_depth'] > 5:

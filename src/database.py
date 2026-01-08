@@ -1,5 +1,5 @@
 """
-SQLite database schema and operations for Toyota FAQ Scraper.
+SQLite database schema and operations for FAQ Scraper.
 Stores all raw content, metadata, and metrics for analysis.
 """
 

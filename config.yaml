@@ -1,21 +1,20 @@
-# Toyota Financial Services FAQ Scraper Configuration
+# FAQ Scraper Configuration
 # This is the source of truth for all URLs and settings
 
-# Seed URLs - ONLY these two are allowed as crawl entry points
+# Seed URLs - Starting points for crawling
 seed_urls:
-  - https://www.toyotafinancial.com/us/en/planning_tools/faq.html
-  - https://www.toyotafinancial.com/us/en/end_of_lease_options/faqs.html
+  - https://example.com/faq
 
 # Allowed domains for internal link traversal
 allowed_domains:
-  - toyotafinancial.com
-  - www.toyotafinancial.com
+  - example.com
+  - www.example.com
 
 # Crawling constraints
 crawl_depth: 5
 max_pages: 1000
 request_rate_limit: 1.0  # requests per second
-user_agent: "Toyota-FAQ-Scraper-PoC/1.0 (Educational Purpose)"
+user_agent: "FAQ-Scraper/1.0"
 
 # Storage paths
 data_dir: "./data"

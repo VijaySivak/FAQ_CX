@@ -1,5 +1,5 @@
 """
-BFS Web Crawler with robots.txt compliance for Toyota Financial Services FAQ.
+BFS Web Crawler with robots.txt compliance.
 Implements depth-limited, domain-restricted crawling with rate limiting.
 """
 
@@ -25,7 +25,7 @@ class RobotsCache:
     
     def __init__(self):
         self.cache: Dict[str, RobotFileParser] = {}
-        self.user_agent = "Toyota-FAQ-Scraper-PoC/1.0"
+        self.user_agent = "FAQ-Scraper/1.0"
     
     def get_robots_parser(self, base_url: str) -> RobotFileParser:
         """Get or create a robots.txt parser for the given domain."""
@@ -49,8 +49,8 @@ class RobotsCache:
         return self.cache[domain]
 
 
-class ToyotaFAQCrawler:
-    """BFS crawler for Toyota Financial Services FAQ pages."""
+class FAQCrawler:
+    """BFS crawler for FAQ pages."""
     
     def __init__(self, config: Config, db_manager: DatabaseManager):
         self.config = config
@@ -326,7 +326,7 @@ class ToyotaFAQCrawler:
     
     def run_crawl(self) -> Dict[str, any]:
         """Run the complete BFS crawl process."""
-        self.logger.info("Starting Toyota FAQ crawl")
+        self.logger.info("Starting FAQ crawl")
         
         # Add seed URLs to queue
         queue_ids = self.db.add_to_crawl_queue(self.config.seed_urls, 0)

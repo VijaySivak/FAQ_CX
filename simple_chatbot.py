@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple FAQ Chatbot for Toyota Financial Services
+Simple FAQ Chatbot
 Tests the RAG system with extracted FAQs
 """
 
@@ -16,7 +16,7 @@ from src.database import DatabaseManager
 from src.vector_store import RAGSystem
 
 def main():
-    print("🚗 Toyota Financial Services FAQ Chatbot")
+    print("💬 FAQ Chatbot")
     print("=" * 50)
     print("Type 'quit' to exit")
     print("=" * 50)

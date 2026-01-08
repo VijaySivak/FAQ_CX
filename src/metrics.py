@@ -1,5 +1,5 @@
 """
-Metrics computation and analysis for Toyota FAQ scraper.
+Metrics computation and analysis for FAQ scraper.
 Generates comprehensive CX metrics and business insights.
 """
 
@@ -388,7 +388,7 @@ class MetricsAnalyzer:
         stats = self.get_overall_statistics()
         
         print("\n" + "="*60)
-        print("TOYOTA FINANCIAL SERVICES FAQ ANALYSIS - METRICS SUMMARY")
+        print("FAQ ANALYSIS - METRICS SUMMARY")
         print("="*60)
         
         print(f"\n📊 CONTENT OVERVIEW:")

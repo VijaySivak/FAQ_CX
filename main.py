@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Toyota Financial Services FAQ Scraper + RAG Chatbot (PoC)
+FAQ Scraper + RAG Chatbot
 Main entry point for the application.
 
 This script orchestrates the complete pipeline:
@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from src.config import Config
 from src.database import DatabaseManager
-from src.crawler import ToyotaFAQCrawler
+from src.crawler import FAQCrawler
 from src.content_extractor import ContentProcessor
 from src.pdf_processor import PDFProcessor
 from src.video_processor import VideoProcessor
@@ -56,7 +56,7 @@ def run_crawl(config: Config, db_manager: DatabaseManager) -> dict:
     """Run the web crawling process."""
     print("🔍 Starting web crawling...")
     
-    crawler = ToyotaFAQCrawler(config, db_manager)
+    crawler = FAQCrawler(config, db_manager)
     crawl_results = crawler.run_crawl()
     
     print(f"✅ Crawling completed:")
@@ -218,7 +218,7 @@ def run_full_pipeline(config: Config, db_manager: DatabaseManager, fresh: bool =
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Toyota Financial Services FAQ Scraper + RAG Chatbot (PoC)",
+        description="FAQ Scraper + RAG Chatbot",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

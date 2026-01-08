@@ -1,5 +1,5 @@
 """
-PDF processing and text extraction for Toyota FAQ scraper.
+PDF processing and text extraction for FAQ scraper.
 Downloads PDFs and extracts text content for RAG ingestion.
 """
 
