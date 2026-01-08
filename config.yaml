@@ -1,0 +1,47 @@
+# Toyota Financial Services FAQ Scraper Configuration
+# This is the source of truth for all URLs and settings
+
+# Seed URLs - ONLY these two are allowed as crawl entry points
+seed_urls:
+  - https://www.toyotafinancial.com/us/en/planning_tools/faq.html
+  - https://www.toyotafinancial.com/us/en/end_of_lease_options/faqs.html
+
+# Allowed domains for internal link traversal
+allowed_domains:
+  - toyotafinancial.com
+  - www.toyotafinancial.com
+
+# Crawling constraints
+crawl_depth: 5
+max_pages: 1000
+request_rate_limit: 1.0  # requests per second
+user_agent: "Toyota-FAQ-Scraper-PoC/1.0 (Educational Purpose)"
+
+# Storage paths
+data_dir: "./data"
+raw_dir: "./data/raw"
+processed_dir: "./data/processed"
+db_path: "./data/faq_scraper.db"
+
+# Vector store and embedding settings
+embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+vector_store_type: "faiss"
+vector_dim: 384
+
+# Content processing
+pdf_enabled: true
+video_enabled: true
+whisper_model_size: "base"  # tiny, base, small, medium, large
+
+# UI settings
+ui_host: "localhost"
+ui_port: 8501
+
+# LLM settings for natural language answer generation
+llm_enabled: true
+llm_provider: "openai"  # openai or none
+llm_model: "gpt-3.5-turbo"  # gpt-3.5-turbo, gpt-4, etc.
+
+# Logging
+log_level: "INFO"
+log_file: "./logs/scraper.log"

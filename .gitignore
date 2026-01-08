@@ -1,0 +1,38 @@
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# Data + crawl artifacts
+data/*.db
+data/*.db-*
+data/raw/
+data/processed/
+
+# Vector index artifacts
+data/faiss_index.bin
+data/documents.pkl
+
+# Jupyter
+.ipynb_checkpoints/
