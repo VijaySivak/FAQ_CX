@@ -74,12 +74,13 @@ class DatabaseManager:
                     page_id INTEGER NOT NULL,
                     question TEXT NOT NULL,
                     answer TEXT NOT NULL,
-                    question_hash TEXT UNIQUE,
+                    question_hash TEXT,
                     answer_hash TEXT,
                     answer_mode TEXT NOT NULL, -- DIRECT_TEXT, LINK_OUT, PHONE_ESCALATION, PDF_ATTACHMENT, VIDEO, PORTAL_REDIRECT
                     link_depth_to_answer INTEGER DEFAULT 0,
                     confidence_score REAL DEFAULT 0.0,
-                    FOREIGN KEY (page_id) REFERENCES pages (id)
+                    FOREIGN KEY (page_id) REFERENCES pages (id),
+                    UNIQUE(page_id, question_hash)  -- Unique per page, not globally
                 );
 
                 -- PDFs table - stores PDF metadata and content
@@ -303,8 +304,7 @@ class DatabaseManager:
                         page_id, question, answer, question_hash, answer_hash,
                         answer_mode, link_depth_to_answer, confidence_score
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(question_hash) DO UPDATE SET
-                        page_id = excluded.page_id,
+                    ON CONFLICT(page_id, question_hash) DO UPDATE SET
                         question = excluded.question,
                         answer = excluded.answer,
                         answer_hash = excluded.answer_hash,

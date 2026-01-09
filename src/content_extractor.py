@@ -117,6 +117,30 @@ class FAQExtractor:
         
         return text
     
+    def normalize_question(self, question: str) -> str:
+        """Normalize question text for better deduplication."""
+        if not question:
+            return ""
+        
+        # Convert to lowercase
+        question = question.lower()
+        
+        # Remove leading/trailing whitespace
+        question = question.strip()
+        
+        # Collapse multiple spaces to single space
+        question = re.sub(r'\s+', ' ', question)
+        
+        # Normalize quotes
+        question = question.replace('"', '"').replace('"', '"')
+        question = question.replace(''', "'").replace(''', "'")
+        
+        # Remove trailing question mark if present (for consistency)
+        if question.endswith('?'):
+            question = question[:-1].strip()
+        
+        return question
+    
     def hash_content(self, content: str) -> str:
         """Generate hash for content deduplication."""
         return hashlib.md5(content.encode('utf-8')).hexdigest()
@@ -472,20 +496,21 @@ class FAQExtractor:
                 answer_elem = heading.find_next_sibling()
                 answer_lines: List[str] = []
 
-                while answer_elem and answer_elem.name not in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                while answer_elem and answer_elem.name not in ['h1', 'h2', 'h3']:
                     if answer_elem.name in ['ul', 'ol']:
                         items = answer_elem.find_all('li')
                         for li in items:
                             li_text = self.clean_text(str(li), preserve_links=True)
                             if li_text:
                                 answer_lines.append(li_text)
-                    elif answer_elem.name in ['p', 'div', 'section']:
+                    elif answer_elem.name in ['p', 'div', 'section', 'h4', 'h5', 'h6']:
                         text = self.clean_text(str(answer_elem), preserve_links=True)
                         if text:
                             answer_lines.append(text)
 
-                    # stop early if we already have a decent amount of content
-                    if sum(len(x) for x in answer_lines) > 200:
+                    # Collect all meaningful content
+                    # Only stop if we hit a new heading or have substantial content
+                    if sum(len(x) for x in answer_lines) > 2000:
                         break
 
                     answer_elem = answer_elem.find_next_sibling()
@@ -557,14 +582,17 @@ class FAQExtractor:
             except Exception as e:
                 self.logger.warning(f"Error in {strategy_name} strategy: {e}")
         
-        # Remove duplicates based on question hash
+        # Remove duplicates based on normalized question hash
         seen_questions = set()
         unique_faqs = []
         
         for faq in all_faqs:
-            question_hash = self.hash_content(faq['question'])
+            normalized_question = self.normalize_question(faq['question'])
+            question_hash = self.hash_content(normalized_question)
             if question_hash not in seen_questions:
                 seen_questions.add(question_hash)
+                # Store the hash in the faq dict for later use
+                faq['question_hash'] = question_hash
                 unique_faqs.append(faq)
         
         self.logger.info(f"Extracted {len(unique_faqs)} unique FAQs and {len(all_help_sections)} help sections from {page_url}")
@@ -578,11 +606,15 @@ class FAQExtractor:
         # Store FAQs in database
         stored_faqs = 0
         for faq in faqs:
+            # Use normalized question hash for consistency
+            normalized_question = self.normalize_question(faq['question'])
+            question_hash = self.hash_content(normalized_question)
+            
             faq_data = {
                 'page_id': page_id,
                 'question': faq['question'],
                 'answer': faq['answer'],
-                'question_hash': self.hash_content(faq['question']),
+                'question_hash': question_hash,
                 'answer_hash': self.hash_content(faq['answer']),
                 'answer_mode': faq['answer_mode'],
                 'link_depth_to_answer': 0,  # Will be updated later

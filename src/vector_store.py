@@ -612,9 +612,22 @@ class RAGSystem:
         
         context = "\n\n".join(context_parts)
         
+        self.logger.info(f"Retrieved {len(faq_contents)} FAQs, building context with {len(context_parts)} sources")
+        
         # Generate answer using LLM if available
         if self.llm_client:
-            answer = self._generate_llm_answer(question, context)
+            llm_answer = self._generate_llm_answer(question, context)
+            # Post-process to ensure no question repetition
+            llm_answer = self._remove_question_repetition(question, llm_answer)
+            
+            # Check if LLM answer is substantially shorter than the source content
+            # If so, fall back to raw answer to avoid truncation
+            source_length = len(faq_contents[0]['answer']) if faq_contents else 0
+            if len(llm_answer) < min(500, source_length * 0.5) and faq_contents:
+                self.logger.warning(f"LLM answer too short ({len(llm_answer)} chars vs {source_length} in source), falling back to raw answer")
+                answer = faq_contents[0]['answer']
+            else:
+                answer = llm_answer
         else:
             # Fallback: use the best matching FAQ answer directly
             best_faq = faq_contents[0]
@@ -675,19 +688,22 @@ Your job is to answer customer questions based on the provided FAQ content.
 
 Instructions:
 - Provide a complete, natural language answer based on the source content provided.
+- DO NOT repeat or include the customer's question in your answer - go straight to the answer.
 - Include ALL relevant information from the sources - do not truncate or summarize excessively.
 - If the answer involves steps or a list, present them clearly.
 - If there are links or resources mentioned, include them.
 - Be friendly and professional.
 - If the sources don't fully answer the question, say so and suggest contacting customer service.
-- Do NOT make up information that isn't in the sources."""
+- Do NOT make up information that isn't in the sources.
+- IMPORTANT: Do not shorten or truncate the answer. Include all key details from the source."""
 
-            user_prompt = f"""Customer Question: {question}
-
-Relevant Information:
+            user_prompt = f"""Relevant Information:
 {context}
 
-Please provide a complete, helpful answer to the customer's question based on the information above."""
+Based on the information above, provide a complete answer to the customer's question. Start immediately with the answer content without repeating the question."""
+
+            self.logger.info(f"Sending to LLM - Context length: {len(context)} chars")
+            self.logger.debug(f"Context preview: {context[:500]}...")
 
             response = self.llm_client.chat.completions.create(
                 model=self.config.llm_model,
@@ -696,10 +712,40 @@ Please provide a complete, helpful answer to the customer's question based on th
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.3,
-                max_tokens=1000
+                max_tokens=3000  # Increased to prevent truncation
             )
             
-            return response.choices[0].message.content.strip()
+            answer = response.choices[0].message.content.strip()
+            
+            # Check if answer appears to be truncated
+            truncation_indicators = [
+                answer.endswith('...'),
+                'If you' in answer[-20:] and len(answer.split()[-1:]) < 3,
+                len(answer) >= 2900,
+                answer.count('.') == 0 and len(answer) > 100,  # No sentence endings for long answers
+                answer[-1] in [',', ' ', 'If', 'Please', 'For', 'When', 'Where']  # Ends mid-sentence
+            ]
+            
+            if any(truncation_indicators):
+                self.logger.warning("Answer may be truncated, attempting to get complete response")
+                # Try again with higher token limit
+                response = self.llm_client.chat.completions.create(
+                    model=self.config.llm_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt + "\n\nIMPORTANT: Provide the COMPLETE answer without truncation."},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=4000
+                )
+                answer = response.choices[0].message.content.strip()
+            
+            # Post-process to remove any question repetition
+            answer = self._remove_question_repetition(question, answer)
+            
+            self.logger.info(f"LLM response length: {len(answer)} chars")
+            
+            return answer
             
         except Exception as e:
             self.logger.error(f"LLM generation error: {e}")
@@ -724,8 +770,8 @@ Please provide a complete, helpful answer to the customer's question based on th
         
         # Check if the question is repeated in the answer
         if len(question_words) > 3:
-            # Look for the question in the answer (first 100 chars)
-            question_pattern = re.escape(question[:100])  # First 100 chars
+            # Look for the question in the answer (first 150 chars to be more thorough)
+            question_pattern = re.escape(question[:150])  # First 150 chars
             if re.search(question_pattern, answer, re.IGNORECASE):
                 # Remove the question from the answer
                 answer = re.sub(question_pattern, '', answer, flags=re.IGNORECASE)
@@ -741,6 +787,9 @@ Please provide a complete, helpful answer to the customer's question based on th
             r'^.*?Pay Online\s*[-:]?\s*',  # "Pay Online" prefix
             r'^.*?and how can I enroll\s*[-:]?\s*',  # "and how can I enroll" prefix
             r'^Pay Online\s*[-:]?\s*',  # Standalone "Pay Online" prefix
+            r'^Customer Question:.*?\n',  # Remove "Customer Question:" line
+            r'^To request a due date change:',  # Specific to this question
+            r'^There are a few factors that make up someones credit:',  # Incomplete answer prefix
         ]
         
         for pattern in patterns_to_remove:
@@ -750,12 +799,15 @@ Please provide a complete, helpful answer to the customer's question based on th
         lines = answer.split('\n')
         if lines:
             first_line = lines[0].strip()
-            # If first line looks like a question, remove it
-            if '?' in first_line and len(first_line) < 100:
+            # If first line looks like a question or incomplete statement ending with :, remove it
+            if ('?' in first_line and len(first_line) < 200) or (first_line.endswith(':') and len(first_line) < 100):
                 lines = lines[1:]  # Remove first line
                 answer = '\n'.join(lines)
         
-        return answer.strip()
+        # Clean up any extra whitespace at start
+        answer = answer.strip()
+        
+        return answer
     
     def _format_answer_as_bullets(self, answer: str) -> str:
         """Format answer as bullet points with proper line breaks."""
@@ -814,10 +866,9 @@ Please provide a complete, helpful answer to the customer's question based on th
     def _extract_help_section(self, answer: str) -> Optional[str]:
         """Extract 'Still need help' section from answer."""
         help_patterns = [
-            r'still\s+need\s+help.*?(?=\n\n|$)',
-            r'contact\s+us.*?(?=\n\n|$)',
-            r'need\s+more\s+help.*?(?=\n\n|$)',
-            r'couldn\'t\s+find.*?contact.*?(?=\n\n|$)'
+            r'(?im)^\s*still\s+need\s+help\??.*?(?=\n\s*\n|$)',
+            r'(?im)^\s*need\s+more\s+help\??.*?(?=\n\s*\n|$)',
+            r'(?im)^\s*couldn\'t\s+find.*?(?=\n\s*\n|$)',
         ]
         
         for pattern in help_patterns:
@@ -832,10 +883,9 @@ Please provide a complete, helpful answer to the customer's question based on th
     def _remove_help_section_from_answer(self, answer: str) -> str:
         """Remove help section from the main answer."""
         help_patterns = [
-            r'\n?still\s+need\s+help.*?(?=\n\n|$)',
-            r'\n?contact\s+us.*?(?=\n\n|$)',
-            r'\n?need\s+more\s+help.*?(?=\n\n|$)',
-            r'\n?couldn\'t\s+find.*?contact.*?(?=\n\n|$)'
+            r'(?im)\n?^\s*still\s+need\s+help\??.*?(?=\n\s*\n|$)',
+            r'(?im)\n?^\s*need\s+more\s+help\??.*?(?=\n\s*\n|$)',
+            r'(?im)\n?^\s*couldn\'t\s+find.*?(?=\n\s*\n|$)',
         ]
         
         for pattern in help_patterns:
